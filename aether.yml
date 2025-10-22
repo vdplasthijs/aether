@@ -1,0 +1,16 @@
+name: aether
+channels:
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
+dependencies:
+  - python=3.12
+  - geopandas
+  - ipykernel
+  - jupyter
+  - matplotlib
+  - numpy
+  - pandas
+  - tqdm
+  - gdal
+  - xarray
+prefix: /opt/anaconda3/envs/aether
