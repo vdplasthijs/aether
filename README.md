@@ -1,5 +1,5 @@
 ![Python](https://img.shields.io/badge/python-3.12+-blue)
-[![License](https://img.shields.io/github/license/vdplasthijs/aether.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/vdplasthijs/aether.svg)](archive/LICENSE)
 ![Issues](https://img.shields.io/github/issues/vdplasthijs/aether)
 ![GitHub Tag](https://img.shields.io/github/v/tag/vdplasthijs/aether)
 

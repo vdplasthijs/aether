@@ -1,7 +1,6 @@
 import os, sys
 import numpy as np 
-import pandas as pd 
-import geopandas as gpd
+import pandas as pd
 import loadpaths
 path_dict = loadpaths.loadpaths()
 import shapely

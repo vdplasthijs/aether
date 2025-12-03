@@ -1,4 +1,4 @@
-import os, sys, datetime, ast
+import os, datetime, ast
 import numpy as np 
 import pandas as pd 
 import geopandas as gpd
@@ -7,8 +7,7 @@ import xarray as xr
 import rioxarray as rxr
 import loadpaths
 path_dict = loadpaths.loadpaths()
-import shapely
-from tqdm import tqdm
+
 
 def corine_lc_schema():
     '''From https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_CORINE_V20_100m#bands'''
