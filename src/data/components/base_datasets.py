@@ -1,47 +1,76 @@
+import os
+
+import torch
 import pandas as pd
 from sklearn.utils import shuffle
 from torch.utils.data import Dataset
-import re
 
-class BaseButterflyDataset(Dataset):
-    def __init__(self, df_path: str, mode="coords", target: bool=True):
-        """
-        Dataset returning desired features/outputs
-        df: dataframe with file paths or coordinates
-        target: indicator if target variable should be returned
-        mode: what your __getitem__ should return
-              options: 'coord', 's2_l1', 'variables'
-        """
-        df = pd.read_csv(df_path)
-        df = shuffle(df, random_state=42)
-        self.mode = mode
+class BaseDataset(Dataset):
+    def __init__(self, df_path: str, modalities: list[str], target: bool=True, numericals: bool=False, dataset_name:str='BaseDataset'):
+        for mod in modalities:
+            assert mod in ['coords'], NotImplementedError(f'{mod} modality is not implemented.')
+            # TODO: add other implemented modalities
+
+        # read and shuffle df
+        assert os.path.exists(df_path), f'{df_path} does not exist.'
+        self.df = pd.read_csv(df_path)
+        self.df = shuffle(self.df, random_state=42)
+
+        self.modalities = modalities
         self.target = target
+        self.numericals = numericals
+        self.dataset_name = dataset_name + '_'+ '_'.join(modalities)
 
-        if self.mode in ['coords', 's2_l1']:
-            df = df.loc[:, ['coords', 'name']]
-
-            df['lat'] = df.apply(
-                lambda row: re.search(r"\((-?\d+\.\d+),\s*(-?\d+\.\d+)\)", row['coords']).group(1), axis=1)
-            df['lon'] = df.apply(
-                lambda row: re.search(r"\((-?\d+\.\d+),\s*(-?\d+\.\d+)\)", row['coords']).group(2), axis=1)
-            df.drop(['coords'], axis=1, inplace=True)
-
-        elif self.mode in ['variables']:
-            raise NotImplementedError
-        else:
-            raise ValueError(f"Unknown mode {self.mode}")
-
-        if not target:
-            df = df.drop(columns=['name'])
-        else:
-            df = df.rename(columns={'name': 'class'})
-
-        self.records = df.to_dict('records')
+        # self.num_classes = None
+        # TODO: target
 
     def __len__(self):
-        return len(self.records)
+        return len(self.df)
+
+
+class BaseButterflyDataset(BaseDataset):
+    def __init__(self, **kwargs):
+        super().__init__(dataset_name='Butterflies', **kwargs)
+
+        # Placeholder for filtered columns
+        columns = ['name_loc']
+
+        # If eo data is coords
+        if 'coords' in self.modalities:
+            self.modalities.remove('coords')
+            self.modalities.extend(['lon', 'lat'])
+            columns.extend(['lat', 'lon'])
+
+
+        if self.target:
+            self.target_names = [c for c in self.df.columns if 'target' in c]
+            columns.extend(self.target_names)
+
+        if self.numericals:
+            self.numerical_names = [c for c in self.df.columns if c not in columns]
+            columns.extend(self.numerical_names)
+
+        self.records = self.df.loc[:, columns].to_dict('records')
 
     def __getitem__(self, idx):
         row = self.records[idx]
-        return row
 
+        formated_row = {'eo': {},
+                        'target': {} if self.target else None,
+                        'numericals': {} if self.numericals else None}
+
+        for modality in self.modalities:
+            if modality in ['lat', 'lon']:
+                formated_row['eo'][modality] = torch.tensor(row[modality])
+            elif modality == 's2':
+                # TODO: tensor reading
+                # formated_row['eo'][modality] =
+                pass
+
+        if self.target:
+            formated_row['target'] = torch.tensor([row[k] for k in self.target_names], dtype=torch.float32)
+
+        if self.numericals:
+            formated_row['numericals'] = torch.tensor([row[k] for k in self.numerical_names], dtype= torch.float32)
+
+        return formated_row
