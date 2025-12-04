@@ -2,8 +2,6 @@
 
 # AETHER-xAI
 
----
-
 [![python](https://img.shields.io/badge/-Python_3.8_%7C_3.9_%7C_3.10-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![pytorch](https://img.shields.io/badge/PyTorch_2.0+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
 [![lightning](https://img.shields.io/badge/-Lightning_2.0+-792ee5?logo=pytorchlightning&logoColor=white)](https://pytorchlightning.ai/)
@@ -25,7 +23,6 @@
 
 ## Description
 
----
 Some code was adapted from [github.com/vdplasthijs/PECL/](github.com/vdplasthijs/PECL/). 
 
 ## Installation
@@ -44,7 +41,6 @@ The S2BMS coordinates and species occurrence probabilities are stored in `conten
 
 ## Project Structure
 
----
 The directory structure of new project looks like this:
 
 ```
@@ -101,7 +97,6 @@ The directory structure of new project looks like this:
 
 ## Getting Started
 
----
 First, install dependencies
 
 ```bash
@@ -126,7 +121,6 @@ pip install - e.
 
 ## Citation 
 
----
 ```
 @article
 {
