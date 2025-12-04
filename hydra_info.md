@@ -1266,7 +1266,7 @@ git clone https://github.com/YourGithubName/your-repo-name
 cd your-repo-name
 
 # create conda environment and install dependencies
-conda env create -f environment.yaml -n myenv
+conda env create -f requirements.yaml -n myenv
 
 # activate conda environment
 conda activate myenv

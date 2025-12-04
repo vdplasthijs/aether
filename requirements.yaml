@@ -1,11 +1,11 @@
-# reasons you might want to use `environment.yaml` instead of `requirements.txt`:
+# reasons you might want to use `requirements.yaml` instead of `requirements.txt`:
 # - pip installs packages in a loop, without ensuring dependencies across all packages
 #   are fulfilled simultaneously, but conda achieves proper dependency control across
 #   all packages
 # - conda allows for installing packages without requiring certain compilers or
 #   libraries to be available in the system, since it installs precompiled binaries
 
-name: myenv
+name: aether
 
 channels:
   - pytorch
