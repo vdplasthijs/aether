@@ -221,3 +221,4 @@ __marimo__/
 
 # Extra
 .DS_Store
+archive/content/api_keys.py
