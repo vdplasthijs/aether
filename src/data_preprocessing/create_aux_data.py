@@ -2,11 +2,11 @@ import os, sys
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
-import loadpaths
-path_dict = loadpaths.loadpaths()
 
 from . import data_utils as du 
 from . import gee_utils as gu
+
+path_dict = du.get_hydra_paths()
 
 def get_bioclim_lc_from_coords(coords):
     """Get both bioclimatic and land cover data from coordinates."""

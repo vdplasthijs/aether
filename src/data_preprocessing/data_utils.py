@@ -5,8 +5,29 @@ import geopandas as gpd
 import rasterio
 import xarray as xr
 import rioxarray as rxr
-import loadpaths
-path_dict = loadpaths.loadpaths()
+from hydra import initialize, compose
+from omegaconf import DictConfig, OmegaConf
+
+def get_hydra_paths():
+    cwd = os.getcwd() + '/..'
+    output_dir = os.path.join(cwd, "temp/outputs")
+    # repo_dir = os.environ.get('PROJECT_ROOT', cwd)
+    print(cwd)
+    with initialize(config_path='../../configs/paths', version_base="1.1"):
+        cfg = compose(
+            config_name="default.yaml",
+            overrides=[
+                f"hydra.run.dir={cwd}",
+                f"hydra.job.num=0",  # required to resolve hydra.job.* interpolations
+                f"paths.output_dir={output_dir}",
+                f"paths.work_dir={cwd}",
+            ]
+        )
+
+    resolved_cfg = OmegaConf.to_container(cfg, resolve=True)
+    path_dict = resolved_cfg['paths']
+    path_dict['repo'] = path_dict['root_dir']
+    return path_dict
 
 def corine_lc_schema():
     '''From https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_CORINE_V20_100m#bands'''
@@ -99,21 +120,21 @@ def bioclim_schema():
     df_all = pd.DataFrame(dict_all)
     return bioclim_variables, df_all
 
-def get_path_s2bms(path_dict=path_dict):
+def get_path_s2bms():
     """Get the path to the Sentinel-2 BMS data directory."""
-    if 's2bms_images' in path_dict:
-        im_path = path_dict['s2bms_images']
+    if 'S2BMS_IMAGES' in os.environ:
+        im_path = os.environ.get('S2BMS_IMAGES')
         assert os.path.exists(im_path), f"Sentinel-2 BMS image path does not exist: {im_path}"
     else:
         im_path = None
-    if 's2bms_presence' in path_dict:
-        presence_path = path_dict['s2bms_presence']
+    if 'S2BMS_PRESENCE' in os.environ:
+        presence_path = os.environ.get('S2BMS_PRESENCE')
     else:
-        presence_path = os.path.join(path_dict['repo'], 'content/S2BMS/ukbms_species-presence/bms_presence_y-2018-2019_th-200.shp')
+        presence_path = os.path.join(os.environ.get('PROJECT_ROOT', '.'), 'data/source/butterflies/S2BMS/ukbms_species-presence/bms_presence_y-2018-2019_th-200.shp')
     assert os.path.exists(presence_path), f"Sentinel-2 BMS presence path does not exist: {presence_path}"
     return im_path, presence_path
 
-def load_s2bms_presence(path_dict=path_dict):
+def load_s2bms_presence():
     """Load the Sentinel-2 BMS species presence GeoDataFrame."""
     _, s2bms_presence_path = get_path_s2bms()
     df_s2bms_presence = gpd.read_file(s2bms_presence_path)
