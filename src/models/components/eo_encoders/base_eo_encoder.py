@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Dict
 
 import torch
 from torch import nn
@@ -13,6 +14,6 @@ class BaseEOEncoder(nn.Module, ABC):
     @abstractmethod
     def forward(
             self,
-            batch: dict[str, torch.Tensor]
+            batch: Dict[str, torch.Tensor]
     ) -> torch.Tensor:
         pass

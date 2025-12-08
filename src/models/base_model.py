@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, final
+from typing import Any, final, Dict
 
 import torch
 from lightning import LightningModule
@@ -14,9 +14,12 @@ class BaseModel(LightningModule, ABC):
             optimizer: torch.optim.Optimizer,
             scheduler: torch.optim.lr_scheduler,
             loss_fn: BaseLossFn,
+            num_classes: int=None
     ) -> None:
         super().__init__()
         self.save_hyperparameters(ignore=['loss_fn', 'eo_encoder', 'prediction_head', 'text_encoder'])
+
+        self.num_classes: int = num_classes
 
         # Loss
         self.loss_fn = loss_fn
@@ -30,14 +33,14 @@ class BaseModel(LightningModule, ABC):
     @abstractmethod
     def forward(
             self,
-            batch: dict[str, torch.Tensor],
+            batch: Dict[str, torch.Tensor],
     ) -> torch.Tensor:
         pass
 
     @abstractmethod
     def _step(
             self,
-            batch: dict[str, torch.Tensor],
+            batch: Dict[str, torch.Tensor],
             mode: str='train',
     ) -> torch.Tensor:
         pass
@@ -45,7 +48,7 @@ class BaseModel(LightningModule, ABC):
     @final
     def training_step(
             self,
-            batch: dict[str, torch.Tensor],
+            batch: Dict[str, torch.Tensor],
             batch_idx: int
     ) -> torch.Tensor:
         return self._step(batch, 'train')
@@ -53,7 +56,7 @@ class BaseModel(LightningModule, ABC):
     @final
     def validation_step(
             self,
-            batch: dict[str, torch.Tensor],
+            batch: Dict[str, torch.Tensor],
             batch_idx: int
     ) -> torch.Tensor:
         return self._step(batch, 'val')
@@ -61,13 +64,13 @@ class BaseModel(LightningModule, ABC):
     @final
     def test_step(
             self,
-            batch: dict[str, torch.Tensor],
+            batch: Dict[str, torch.Tensor],
             batch_idx: int
     ) -> torch.Tensor:
         return self._step(batch, 'test')
 
     @final
-    def configure_optimizers(self) -> dict[str, Any]:
+    def configure_optimizers(self) -> Dict[str, Any]:
         optimizer = self.hparams.optimizer(params=self.trainer.model.parameters())
 
         if self.hparams.scheduler is not None:

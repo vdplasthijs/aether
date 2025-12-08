@@ -1,4 +1,5 @@
-from typing import override
+from typing import override, Dict
+
 
 import torch
 from geoclip import LocationEncoder
@@ -15,7 +16,7 @@ class GeoClipEncoder(BaseEOEncoder):
     @override
     def forward(
             self,
-            batch: dict[str, torch.Tensor],
+            batch: Dict[str, torch.Tensor],
     ) -> torch.Tensor:
         coords = batch.get('eo', {}).get('coords')
         feats = self.eo_encoder(coords)

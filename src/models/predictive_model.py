@@ -1,4 +1,4 @@
-from typing import override
+from typing import override, Dict
 
 import torch
 
@@ -13,7 +13,7 @@ class PredictiveModel(BaseModel):
             self,
             eo_encoder: BaseEOEncoder,
             prediction_head: BasePredictionHead,
-            prediction_classes: int,
+            num_classes: int,
             freezing_strategy: list[str],
             optimizer: torch.optim.Optimizer,
             scheduler: torch.optim.lr_scheduler,
@@ -28,7 +28,7 @@ class PredictiveModel(BaseModel):
 
         # Prediction head
         self.prediction_head = prediction_head
-        self.prediction_head.set_dim(input_dim=self.eo_encoder.output_dim, output_dim=prediction_classes)
+        self.prediction_head.set_dim(input_dim=self.eo_encoder.output_dim, output_dim=num_classes)
         self.prediction_head.configure_nn()
 
         # Freezing requested parts
@@ -37,7 +37,7 @@ class PredictiveModel(BaseModel):
     @override
     def forward(
             self,
-            batch: dict[str, torch.Tensor]
+            batch: Dict[str, torch.Tensor]
     ) -> torch.Tensor:
         feats = self.eo_encoder(batch)
         return self.prediction_head(feats)
@@ -45,7 +45,7 @@ class PredictiveModel(BaseModel):
     @override
     def _step(
             self,
-            batch: dict[str, torch.Tensor],
+            batch: Dict[str, torch.Tensor],
             mode: str='train'
     ) -> torch.Tensor:
         feats = self.forward(batch)
