@@ -23,7 +23,7 @@ class BaseDataModule(LightningDataModule):
         self.batch_size_per_device = batch_size
 
     @property
-    def prediction_classes(self) -> int:
+    def num_classes(self) -> int:
         return self.dataset.num_classes
 
     def setup_batch_size_per_device(self) -> None:
