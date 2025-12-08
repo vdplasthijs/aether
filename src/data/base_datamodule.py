@@ -1,30 +1,30 @@
-from typing import Any, Dict, Optional, Tuple
-
+from typing import Tuple, Any
 
 import torch
+from torch.utils.data import DataLoader, random_split
 from lightning import LightningDataModule
-from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
 
-from src.data.components.base_datasets import BaseDataset
+from src.data.base_dataset import BaseDataset
 
-class GeoClipDataModule(LightningDataModule):
+class BaseDataModule(LightningDataModule):
     def __init__(
-        self,
-        dataset: BaseDataset,
-        batch_size: int = 64,
-        train_val_test_split: Tuple[int, int, int] = (0.7, 0.15, 0.15),
-        num_workers: int = 0,
-        pin_memory: bool = False,
-        split_mode: str = "random",
+            self,
+            dataset: BaseDataset,
+            batch_size: int = 64,
+            train_val_test_split: Tuple[float, float, float] = (0.7, 0.15, 0.15),
+            num_workers: int = 0,
+            pin_memory: bool = False,
+            split_mode: str = 'random'
     ) -> None:
-
         super().__init__()
-
         self.save_hyperparameters(logger=False)
 
         self.dataset = dataset
         self.batch_size_per_device = batch_size
 
+    @property
+    def prediction_classes(self) -> int:
+        return self.dataset.num_classes
 
     def setup_batch_size_per_device(self) -> None:
         """Divide batch size by the number of devices."""
@@ -35,17 +35,18 @@ class GeoClipDataModule(LightningDataModule):
                 )
             self.batch_size_per_device = self.hparams.batch_size // self.trainer.world_size
 
-    def setup(self, stage: Optional[str] = None) -> None:
-
+    def setup(self, stage:str = 'fit') -> None:
         self.setup_batch_size_per_device()
 
         if self.hparams.split_mode == "random":
             self.data_train, self.data_val, self.data_test = random_split(
-                    dataset=self.dataset,
-                    lengths=self.hparams.train_val_test_split,
-                    generator=torch.Generator().manual_seed(42),
-                )
+                dataset=self.dataset,
+                lengths=self.hparams.train_val_test_split,
+                generator=torch.Generator().manual_seed(42),
+            )
             print(f'Dataset was randomly split with proportions: {self.hparams.train_val_test_split}')
+        else:
+            raise NotImplementedError(f'{self.hparams.train_val_test_split} split mode not implemented.')
 
         #     split_indices = {
         #         'train_indices': self.data_train.get('id'),
@@ -58,7 +59,6 @@ class GeoClipDataModule(LightningDataModule):
         # timestamp = cdu.create_timestamp()
         # torch.save(split_indices, os.path.join(X, 'split_indices_{self.dataset_name}_{timestamp}.pth'))
         # print(f'Saved split indices to split_indices_{timestamp}.pth')
-
 
     def train_dataloader(self) -> DataLoader[Any]:
         """Create and return the train dataloader.
@@ -99,6 +99,5 @@ class GeoClipDataModule(LightningDataModule):
             shuffle=False,
         )
 
-
 if __name__ == "__main__":
-    _ = GeoClipDataModule()
+    _ = BaseDataModule(None, None, None, None, None, None)
