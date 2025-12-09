@@ -31,6 +31,10 @@ def log_hyperparameters(object_dict: Dict[str, Any]) -> None:
         return
 
     hparams["model"] = cfg["model"]
+    # explicitly surface optimizer and scheduler configs so loggers (e.g. wandb)
+    # display them alongside the model definition
+    hparams["optimizer"] = cfg["model"].get("optimizer")
+    hparams["scheduler"] = cfg["model"].get("scheduler")
 
     # save number of model parameters
     hparams["model/params/total"] = sum(p.numel() for p in model.parameters())
