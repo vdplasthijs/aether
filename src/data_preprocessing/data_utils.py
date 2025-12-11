@@ -14,7 +14,7 @@ def get_hydra_paths():
     # repo_dir = os.environ.get('PROJECT_ROOT', cwd)
     with initialize(config_path='../../configs/paths', version_base="1.1"):
         cfg = compose(
-            config_name="default.yaml",
+            config_name="local.yaml",
             overrides=[
                 f"hydra.run.dir={cwd}",
                 f"hydra.job.num=0",  # required to resolve hydra.job.* interpolations
