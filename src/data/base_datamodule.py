@@ -78,7 +78,7 @@ class BaseDataModule(LightningDataModule):
 
     def load_split_indices(self, filepath: str = None) -> dict:
         """Load split indices from a file."""
-        if os.path.exists(filepath):
+        if not os.path.exists(filepath):
             raise FileNotFoundError('Split indices file does not exist: {filepath}')
 
         split_indices = torch.load(filepath, weights_only=False)
