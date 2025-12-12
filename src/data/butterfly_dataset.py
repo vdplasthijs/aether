@@ -3,22 +3,21 @@ import os
 import torch
 import numpy as np
 from src.data.base_dataset import BaseDataset
-from src.data.utils import open_file_as_tensor
 import src.data_preprocessing.data_utils as du
+from src.utils.errors import IllegalArgumentCombination
 
-path_dict = du.get_hydra_paths()
 
 class ButterflyDataset(BaseDataset):
     def __init__(
             self,
-            path_csv: str = os.path.join(path_dict['data_dir'], 'model_ready/s2bms_presence_with_aux_data.csv'),
+            path_csv: str,
             modalities: list[str] = ['coords'],
             use_target_data: bool = True,
             use_aux_data: bool = False,
             random_state: int = 42,
             path_s2_im: str = None,
-            n_bands: int = 4,
-            zscore_im: bool = True
+            n_bands: int | None = None,
+            zscore_im: bool | None = None,
     ) -> None:
         super().__init__(path_csv, modalities, use_target_data, use_aux_data, 'Butterflies', random_state)
 
@@ -32,11 +31,10 @@ class ButterflyDataset(BaseDataset):
         if 'coords' in self.modalities:
             columns.extend(['lat', 'lon'])
         if 's2' in self.modalities:
-            if path_s2_im is None:
-                path_s2_im = os.path.join(os.environ.get('S2BMS_PATH', None), 'sentinel2_satellite-images/y-2018-2019_m-06-09')  ## default path from S2BMS dataset (on Zotero). Assuming S2BMS_PATH points to the parent folder
-                assert path_s2_im is not None, "S2BMS_PATH environment variable not set, please provide path_s2_im"
-            assert os.path.exists(path_s2_im), f'S2BMS path does not exist: {path_s2_im}'
-            self.path_s2_im = path_s2_im
+            self.path_s2_im = path_s2_im or IllegalArgumentCombination(f'Provide path_s2_im for if using s2 modality')
+            self.path_s2_im = os.path.join(self.path_s2_im, 'sentinel2_satellite-images/y-2018-2019_m-06-09')  ## default path from S2BMS dataset (on Zotero). Assuming S2BMS_PATH points to the parent folder
+            assert os.path.exists(path_s2_im), FileNotFoundError(f'S2BMS path does not exist: {path_s2_im}')
+
             columns.append('s2_path')
             self.add_s2_paths()
             self.n_bands = n_bands
@@ -81,10 +79,10 @@ class ButterflyDataset(BaseDataset):
         return None
 
     def add_s2_paths(self):
-        assert os.path.exists(self.path_s2_im), f"Image folder does not exist: {self.path_s2_im}"
         content_image_folder = os.listdir(self.path_s2_im)
         suffix_images = list(set((['_'.join(x.split('_')[3:]) for x in content_image_folder])))
         prefix_images = list(set(([x.split('_')[0] for x in content_image_folder])))
+
         assert len(prefix_images) == 1, f'Multiple prefixes found in image folder: {prefix_images}'
         prefix_images = prefix_images[0]
         list_paths = [] 
@@ -113,7 +111,7 @@ class ButterflyDataset(BaseDataset):
         elif self.n_bands == 3:
             im = im[:3, :, :]
         else:
-            assert False, f'Number of bands {self.n_bands} not implemented.'
+            raise IllegalArgumentCombination(f'Number of bands {self.n_bands} not implemented.')
 
         if self.zscore_im:
             im = im.astype(np.int32)
@@ -136,8 +134,8 @@ class ButterflyDataset(BaseDataset):
             if modality in ['coords']:
                 formatted_row['eo'][modality] = torch.tensor([row['lat'], row['lon']])
             elif modality == 's2':
-                # formatted_row['eo'][modality] = open_file_as_tensor(row['s2_path'])
                 formatted_row['eo'][modality] = self.load_image(row['s2_path'])
+                # TODO: augmentations
 
         if self.use_target_data:
             formatted_row['target'] = torch.tensor([row[k] for k in self.target_names], dtype=torch.float32)

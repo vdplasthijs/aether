@@ -14,7 +14,7 @@ class BaseDataset(Dataset, ABC):
             use_target_data: bool = True,
             use_aux_data: bool = False,
             dataset_name:str='BaseDataset',
-            random_state=42,
+            random_state: int = 42,
             mode: str = 'train'
     ) -> None:
 
@@ -35,8 +35,7 @@ class BaseDataset(Dataset, ABC):
         self.target_names: list[str] | None = None
         self.aux_names: list[str] | None = None
         self.records: Dict[str] | None = None
-
-        self.mode = mode  # 'train', 'val', 'test'
+        self.mode: str = mode  # 'train', 'val', 'test'
 
     @final
     def __len__(self) -> int:

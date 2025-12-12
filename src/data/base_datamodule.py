@@ -1,13 +1,14 @@
-from typing import Tuple, Any
+from functools import partial
+from typing import Tuple, Any, Dict, List
 import os
 import torch
 from torch.utils.data import DataLoader, random_split
 from lightning import LightningDataModule
 
 from src.data.base_dataset import BaseDataset
-import src.data_preprocessing.data_utils as du
+from src.models.components.collate_fns import collate_fn
+from src.utils.errors import IllegalArgumentCombination
 
-path_dict = du.get_hydra_paths()
 
 class BaseDataModule(LightningDataModule):
     def __init__(
@@ -25,6 +26,7 @@ class BaseDataModule(LightningDataModule):
 
         self.dataset: BaseDataset = dataset
         self.batch_size_per_device: int = batch_size
+        self.use_collate_fn: bool = True if self.dataset.use_aux_data else False
 
         self.setup()
 
@@ -52,7 +54,8 @@ class BaseDataModule(LightningDataModule):
             )
             print(f'Dataset was randomly split with proportions: {self.hparams.train_val_test_split}')
         elif self.hparams.split_mode == "from_file":
-            assert self.hparams.filepath_split_indices is not None, "filepath_split_indices must be provided when split_mode is 'from_file'"
+            assert self.hparams.filepath_split_indices is not None, IllegalArgumentCombination(f"filepath_split_indices must be provided when split_mode is 'from_file'")
+
             split_indices = self.load_split_indices(self.hparams.filepath_split_indices)
             train_indices = split_indices['train_indices']
             val_indices = split_indices['val_indices']
@@ -72,23 +75,16 @@ class BaseDataModule(LightningDataModule):
         else:
             raise NotImplementedError(f'{self.hparams.train_val_test_split} split mode not implemented.')
 
-        #     split_indices = {
-        #         'train_indices': self.data_train.get('id'),
-        #         'val_indices': self.data_val.get('id'),
-        #         'test_indices': self.data_test.get('id')
-        #     }
-        # else:
-        #     raise NotImplementedError
-        #
-        # timestamp = cdu.create_timestamp()
-        # torch.save(split_indices, os.path.join(X, 'split_indices_{self.dataset_name}_{timestamp}.pth'))
-        # print(f'Saved split indices to split_indices_{timestamp}.pth')
 
     def load_split_indices(self, filepath: str = None) -> dict:
         """Load split indices from a file."""
-        assert os.path.exists(filepath), f'Split indices file does not exist: {filepath}'
+        if not os.path.exists(filepath):
+            raise FileNotFoundError('Split indices file does not exist: {filepath}')
+
         split_indices = torch.load(filepath, weights_only=False)
         assert 'train_indices' in split_indices and 'val_indices' in split_indices, "Split indices file must contain 'train_indices' and 'val_indices'"
+
+        # TODO: is this ever used?
         n_in_splits = len(split_indices['train_indices']) + len(split_indices['val_indices'])
         if 'test_indices' in split_indices:
             n_in_splits += len(split_indices['test_indices'])
@@ -106,6 +102,7 @@ class BaseDataModule(LightningDataModule):
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
             shuffle=True,
+            collate_fn=partial(collate_fn, mode='train') if self.use_collate_fn else None,
         )
 
     def val_dataloader(self) -> DataLoader[Any]:
@@ -120,6 +117,7 @@ class BaseDataModule(LightningDataModule):
             pin_memory=self.hparams.pin_memory,
             persistent_workers=True if self.hparams.num_workers > 0 else False,
             shuffle=False,
+            collate_fn=partial(collate_fn, mode='val') if self.use_collate_fn else None,
         )
 
     def test_dataloader(self) -> DataLoader[Any]:
@@ -134,7 +132,8 @@ class BaseDataModule(LightningDataModule):
             pin_memory=self.hparams.pin_memory,
             persistent_workers=True if self.hparams.num_workers > 0 else False,
             shuffle=False,
+            collate_fn=partial(collate_fn, mode='test') if self.use_collate_fn else None,
         )
 
 if __name__ == "__main__":
-    _ = BaseDataModule(None, None, None, None, None, None)
+    _ = BaseDataModule(None, None, None, None, None, None, None)
