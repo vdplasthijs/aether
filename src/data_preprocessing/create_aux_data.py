@@ -59,7 +59,7 @@ def get_bioclim_lc_from_coords_list(coords_list, name_list=None, save_file=False
     return results
 
 def create_butterfly_aux_data(download_aux_data=False, data_dir=None, filename='s2bms_bioclim_lc_data.csv',
-                              prefix_aux='', prefix_target='target_', save_file=True):
+                              prefix_aux='aux_', prefix_target='target_', save_file=True):
     '''Create auxiliary dataset for S2BMS butterfly data. 
     Steps:
     - Load S2BMS presence data.
