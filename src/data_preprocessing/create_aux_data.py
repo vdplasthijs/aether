@@ -15,7 +15,7 @@ def get_bioclim_lc_from_coords(coords):
     return {**bioclim_data, **lc_data}
 
 def get_bioclim_lc_from_coords_list(coords_list, name_list=None, save_file=False,
-                                    save_folder=os.path.join(os.environ['PROJECT_ROOT'], 'data/source/butterflies/'), 
+                                    save_folder=os.path.join(os.environ['PROJECT_ROOT'], 'data/source/butterflies/'),
                                     save_filename='bioclim_lc_data.csv'):
     """Get both bioclimatic and land cover data from a list of coordinates."""
     if name_list is not None:
@@ -53,6 +53,26 @@ def get_bioclim_lc_from_coords_list(coords_list, name_list=None, save_file=False
             print(f"Intermediate save of bioclimatic and land cover data to {save_path} at {i_coords + 1} samples")
 
     results = pd.DataFrame(results)
+
+    # Add top-5 corine cols
+    target_cols = [c for c in results.columns if ('corine' in c and 'top' not in c)]
+    target_cols.sort()
+
+    sub_df = results[target_cols]
+    sub_np = sub_df.to_numpy()
+
+    # reproducible randomness
+    rng = np.random.default_rng(seed=42)
+    noise = rng.uniform(0, 1e-8, size=sub_np.shape)
+    sub_np_noisy = sub_np + noise
+
+    # top-5
+    top_k_idx = np.argsort(sub_np_noisy, axis=1)[:, -5:][:, ::-1]
+    target_cols_np = np.array(target_cols)
+
+    for i in range(5):
+        results[f"aux_corine_frac_top_{i + 1}"] = target_cols_np[top_k_idx[:, i]]
+
     if save_file:
         results.to_csv(save_path, index=False)
         print(f"Saved bioclimatic and land cover data to {save_path}")
@@ -60,7 +80,7 @@ def get_bioclim_lc_from_coords_list(coords_list, name_list=None, save_file=False
 
 def create_butterfly_aux_data(download_aux_data=False, data_dir=None, filename='s2bms_bioclim_lc_data.csv',
                               prefix_aux='aux_', prefix_target='target_', save_file=True):
-    '''Create auxiliary dataset for S2BMS butterfly data. 
+    '''Create auxiliary dataset for S2BMS butterfly data.
     Steps:
     - Load S2BMS presence data.
     - Download bioclimatic and land cover data if needed, else open.
@@ -72,7 +92,7 @@ def create_butterfly_aux_data(download_aux_data=False, data_dir=None, filename='
         get_bioclim_lc_from_coords_list(coords_list=df_s2bms_presence.tuple_coords.values,
                                         name_list=df_s2bms_presence.name_loc.values,
                                         save_file=False, save_filename=filename)
-   
+
     if data_dir is None:
         data_dir = os.path.join(os.environ['PROJECT_ROOT'], 'data')
     path_butterfly_aux_target = os.path.join(data_dir, 'source', 'butterflies', filename)
