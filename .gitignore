@@ -188,7 +188,8 @@ cython_debug/
 
 # Lightning-Hydra-Template
 configs/local/default.yaml
-/data/
+/data/model_ready/
+/data/source/
 /logs/
 .env
 
