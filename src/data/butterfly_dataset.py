@@ -9,15 +9,15 @@ from src.utils.errors import IllegalArgumentCombination
 
 class ButterflyDataset(BaseDataset):
     def __init__(
-            self,
-            path_csv: str,
-            modalities: list[str] = ['coords'],
-            use_target_data: bool = True,
-            use_aux_data: bool = False,
-            random_state: int = 42,
-            path_s2_im: str = None,
-            n_bands: int | None = None,
-            zscore_im: bool | None = None,
+        self,
+        path_csv: str,
+        modalities: list[str] = ['coords'],
+        use_target_data: bool = True,
+        use_aux_data: bool = False,
+        random_state: int = 42,
+        path_s2_im: str = None,
+        n_bands: int | None = None,
+        zscore_im: bool | None = None,
     ) -> None:
         super().__init__(path_csv, modalities, use_target_data, use_aux_data, 'Butterflies', random_state)
 
@@ -32,7 +32,9 @@ class ButterflyDataset(BaseDataset):
             columns.extend(['lat', 'lon'])
         if 's2' in self.modalities:
             self.path_s2_im = path_s2_im or IllegalArgumentCombination(f'Provide path_s2_im for if using s2 modality')
-            self.path_s2_im = os.path.join(self.path_s2_im, 'sentinel2_satellite-images/y-2018-2019_m-06-09')  ## default path from S2BMS dataset (on Zotero). Assuming S2BMS_PATH points to the parent folder
+            self.path_s2_im = os.path.join(
+                self.path_s2_im, 'sentinel2_satellite-images/y-2018-2019_m-06-09'
+            )  ## default path from S2BMS dataset (on Zotero). Assuming S2BMS_PATH points to the parent folder
             assert os.path.exists(path_s2_im), FileNotFoundError(f'S2BMS path does not exist: {path_s2_im}')
 
             columns.append('s2_path')
@@ -43,12 +45,12 @@ class ButterflyDataset(BaseDataset):
                 self.init_norm_stats()
 
         if self.use_target_data:
-            self.target_names = [c for c in self.df.columns if 'target' in c]
+            self.target_names = [c for c in self.df.columns if 'target_' in c]
             columns.extend(self.target_names)
             self.num_classes = len(self.target_names)
 
         if self.use_aux_data:
-            self.aux_names = [c for c in self.df.columns if c not in columns and c != 'name_loc']
+            self.aux_names = [c for c in self.df.columns if "aux_" in c]
             columns.extend(self.aux_names)
 
         self.records = self.df.loc[:, columns].to_dict('records')
@@ -56,15 +58,15 @@ class ButterflyDataset(BaseDataset):
     def init_norm_stats(self, means: list[float] = None, stds: list[float] = None):
         if means is None or stds is None:
             print('Using S2BMS default zscore means and stds')
-            means = np.array([661.1047,  770.6800,  531.8330, 3228.5588]).astype(np.float32)  ## computed across entire ds
-            stds = np.array([640.2482,  571.8545,  597.3570, 1200.7518]).astype(np.float32) 
+            means = np.array([661.1047, 770.6800, 531.8330, 3228.5588]).astype(np.float32)  ## computed across entire ds
+            stds = np.array([640.2482, 571.8545, 597.3570, 1200.7518]).astype(np.float32)
         if self.n_bands == 3:
             means = means[:3]
             stds = stds[:3]
         self.norm_means = means[:, None, None]
         self.norm_std = stds[:, None, None]
 
-    def find_image_path(self, name_loc, prefix_images: str='', suffix_images: list[str]=['']):
+    def find_image_path(self, name_loc, prefix_images: str = '', suffix_images: list[str] = ['']):
         if len(suffix_images) == 1:
             im_file_name = f'{prefix_images}_{name_loc}_{suffix_images[0]}'
             im_file_path = os.path.join(self.path_s2_im, im_file_name)
@@ -85,7 +87,7 @@ class ButterflyDataset(BaseDataset):
 
         assert len(prefix_images) == 1, f'Multiple prefixes found in image folder: {prefix_images}'
         prefix_images = prefix_images[0]
-        list_paths = [] 
+        list_paths = []
         for loc in self.df['id'].values:
             im_path = self.find_image_path(loc, prefix_images=prefix_images, suffix_images=suffix_images)
             if im_path is None:
@@ -96,7 +98,7 @@ class ButterflyDataset(BaseDataset):
         self.df['s2_path'] = list_paths
 
     def zscore_image(self, im: np.ndarray):
-        '''Apply preprocessing function to a single image. 
+        '''Apply preprocessing function to a single image.
         raw_sent2_means = torch.tensor([661.1047,  770.6800,  531.8330, 3228.5588])
         raw_sent2_stds = torch.tensor([640.2482,  571.8545,  597.3570, 1200.7518])
         '''
@@ -105,9 +107,9 @@ class ButterflyDataset(BaseDataset):
 
     def load_image(self, filepath: str):
         im = du.load_tiff(filepath, datatype='np')
-        
+
         if self.n_bands == 4:
-            pass 
+            pass
         elif self.n_bands == 3:
             im = im[:3, :, :]
         else:
@@ -122,10 +124,7 @@ class ButterflyDataset(BaseDataset):
         return torch.tensor(im).float()
 
     @override
-    def __getitem__(
-            self,
-            idx: int
-    ) -> Dict[str, Any]:
+    def __getitem__(self, idx: int) -> Dict[str, Any]:
         row = self.records[idx]
 
         formatted_row = {'eo': {}}
@@ -141,9 +140,10 @@ class ButterflyDataset(BaseDataset):
             formatted_row['target'] = torch.tensor([row[k] for k in self.target_names], dtype=torch.float32)
 
         if self.use_aux_data:
-            formatted_row['aux'] = torch.tensor([row[k] for k in self.aux_names], dtype= torch.float32)
+            formatted_row["aux"] = [row[i] for i in self.aux_names]
 
         return formatted_row
+
 
 if __name__ == '__main__':
     _ = ButterflyDataset(None, None, None, None, None)
