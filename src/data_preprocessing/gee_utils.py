@@ -73,6 +73,8 @@ def convert_bioclim_to_units(bioclim_dict):
 
 def get_gee_image_from_coord(coords, collection_name='corine', patch_size=2000, year=2017,
                              sentinel_month_start=3, sentinel_month_end=9, threshold_size: int | None = None):
+    '''Get a GEE image from coordinates, for a given collection.
+    Collections can have slightly different parameters/logic, hence they are split up in different if statements.'''
     aoi = create_aoi_from_coord_buffer(coords, buffer_m=patch_size // 2, bool_buffer_in_deg=False)
     lon, lat = coords
     epsg_code = get_epsg_from_latlon(lat=lat, lon=lon)
@@ -152,6 +154,8 @@ def convert_corine_lc_im_to_tab(lc_im):
 
 def create_filename(base_name, collection_name='sentinel2', year=2024,
                     sentinel_month_start='06', sentinel_month_end='09'):
+    '''Create a filename for the GEE image based on collection and parameters.
+    base_name should correspond to a unique identifier for the location/sample.'''
     if collection_name == 'sentinel2':
         filename = f'{base_name}_sent2-4band_y-{year}_m-{sentinel_month_start}-{sentinel_month_end}.tif'
     elif collection_name == 'alphaearth':
@@ -172,6 +176,12 @@ def download_gee_image(coords, name: str, path_save: str,
                        pixel_patch_size=128, verbose=0, year=2019,
                         sentinel_month_start='06', sentinel_month_end='09',
                         collection_name='sentinel2', resize_image=True):
+    '''Download a GEE image for given coordinates and save it locally.
+    Steps:
+    - Given a desired patch size, create an AOI around the coordinates with an added buffer.
+    - Retrieve the image from the GEE collection. 
+    - Download using geemap.
+    - Open the image, crop to desired size (if resize_image is True), and save again.'''
     assert collection_name in ['sentinel2', 'alphaearth', 'dynamicworld', 'corine'], f'image collection {collection_name} not recognised.'
     assert type(path_save) and os.path.exists(path_save), f'path_save must be a valid path, got {path_save}'
     gsd_resolution = 10
@@ -224,7 +234,7 @@ def download_gee_image(coords, name: str, path_save: str,
 def download_list_coord(coord_list, name_list=None, path_save: str | None = None, pixel_patch_size=128,
                         name_group='sample', start_index=0, stop_index=None, resize_image=True, 
                         list_collections=['sentinel2', 'alphaearth']):
-    
+    '''For a list of coordinates (and optional names), download GEE images for each coordinate and save them locally.'''
     assert type(coord_list) == list
     assert path_save is not None and type(path_save) == str, "path_save must be provided"
     if not os.path.exists(path_save):

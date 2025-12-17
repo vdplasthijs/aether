@@ -60,6 +60,11 @@ def get_bioclim_lc_from_coords_list(coords_list, name_list=None, save_file=False
 
 def create_butterfly_aux_data(download_aux_data=False, data_dir=None, filename='s2bms_bioclim_lc_data.csv',
                               prefix_aux='', prefix_target='target_', save_file=True):
+    '''Create auxiliary dataset for S2BMS butterfly data. 
+    Steps:
+    - Load S2BMS presence data.
+    - Download bioclimatic and land cover data if needed, else open.
+    - Merge the presence (target) & auxiliary data. to one csv. Some renaming etc.'''
     assert type(prefix_aux) == str, "prefix_aux must be a string"
     assert type(prefix_target) == str, "prefix_target must be a string"
     df_s2bms_presence = du.load_s2bms_presence()
