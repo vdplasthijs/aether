@@ -8,25 +8,27 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.model_selection import GroupShuffleSplit
-from geopy.distance import distance as geodist # avoid naming confusion
+from geopy.distance import distance as geodist  # avoid naming confusion
 from src.data.base_dataset import BaseDataset
-from src.models.components.collate_fns import collate_fn
+from src.data.base_caption_builder import BaseCaptionBuilder
+from src.data.collate_fns import collate_fn
 from src.utils.errors import IllegalArgumentCombination
 
 
 class BaseDataModule(LightningDataModule):
     def __init__(
-            self,
-            dataset: BaseDataset,
-            batch_size: int = 64,
-            train_val_test_split: Tuple[float, float, float] = (0.7, 0.15, 0.15),
-            num_workers: int = 0,
-            pin_memory: bool = False,
-            split_mode: str = 'random',
-            save_split: bool = False,
-            dataset_name: str = 'base',
-            filepath_split_indices_load: str | None = None,
-            filepath_split_indices_save: str | None = None
+        self,
+        dataset: BaseDataset,
+        batch_size: int = 64,
+        train_val_test_split: Tuple[float, float, float] = (0.7, 0.15, 0.15),
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        split_mode: str = 'random',
+        save_split: bool = False,
+        dataset_name: str = 'base',
+        filepath_split_indices_load: str | None = None,
+        filepath_split_indices_save: str | None = None,
+        caption_builder: BaseCaptionBuilder = None,
     ) -> None:
         super().__init__()
         self.save_hyperparameters(logger=False)
@@ -34,6 +36,9 @@ class BaseDataModule(LightningDataModule):
         self.dataset: BaseDataset = dataset
         self.batch_size_per_device: int = batch_size
         self.use_collate_fn: bool = True if self.dataset.use_aux_data else False
+        if self.use_collate_fn:
+            self.caption_builder = caption_builder
+            self.caption_builder.sync_with_dataset(self.dataset)
 
         self.setup()
 
@@ -55,7 +60,7 @@ class BaseDataModule(LightningDataModule):
             self.batch_size_per_device = self.hparams.batch_size // self.trainer.world_size
 
     def split_data(self) -> None:
-        '''Split data into train, val and test. Either calculated here or loaded from file (random or dbscan clustered). 
+        '''Split data into train, val and test. Either calculated here or loaded from file (random or dbscan clustered).
         Can be saved to file.'''
         split_data_from_inds = True
 
@@ -71,8 +76,8 @@ class BaseDataModule(LightningDataModule):
                 split_indices = {
                     'train_indices': self.data_train.dataset.df.id,
                     'val_indices': self.data_val.dataset.df.id,
-                    'test_indices': self.data_test.dataset.df.id
-                    }
+                    'test_indices': self.data_test.dataset.df.id,
+                }
 
         elif self.hparams.split_mode == "spatial_clusters":
             print('Splitting dataset using spatial clusters. This can take a while...')
@@ -93,8 +98,17 @@ class BaseDataModule(LightningDataModule):
 
             gss = GroupShuffleSplit(n_splits=1, test_size=self.hparams.train_val_test_split[2], random_state=0)
             train_val_indices, test_indices = next(gss.split(np.arange(len(coords)), groups=clusters))
-            gss_2 = GroupShuffleSplit(n_splits=1, test_size=(self.hparams.train_val_test_split[1] / (self.hparams.train_val_test_split[0] + self.hparams.train_val_test_split[1])), random_state=0)
-            tmp_train_indices, tmp_val_indices = next(gss_2.split(train_val_indices, groups=clusters[train_val_indices]))
+            gss_2 = GroupShuffleSplit(
+                n_splits=1,
+                test_size=(
+                    self.hparams.train_val_test_split[1]
+                    / (self.hparams.train_val_test_split[0] + self.hparams.train_val_test_split[1])
+                ),
+                random_state=0,
+            )
+            tmp_train_indices, tmp_val_indices = next(
+                gss_2.split(train_val_indices, groups=clusters[train_val_indices])
+            )
             train_indices = train_val_indices[tmp_train_indices]
             val_indices = train_val_indices[tmp_val_indices]
             clusters_train = clusters[train_indices]
@@ -107,34 +121,43 @@ class BaseDataModule(LightningDataModule):
 
             ## assert no overlap in clusters:
             assert len(np.intersect1d(clusters_train, clusters_val)) == 0, np.intersect1d(clusters_train, clusters_val)
-            assert len(np.intersect1d(clusters_train, clusters_test)) == 0, np.intersect1d(clusters_train, clusters_test)
+            assert len(np.intersect1d(clusters_train, clusters_test)) == 0, np.intersect1d(
+                clusters_train, clusters_test
+            )
             assert len(np.intersect1d(clusters_val, clusters_test)) == 0, np.intersect1d(clusters_val, clusters_test)
 
-            print(f'Created {len(train_indices)} train, {len(val_indices)} val, {len(test_indices)} test indices using DBSCAN spatial clustering with {min_dist} m minimum distance between clusters.')
+            print(
+                f'Created {len(train_indices)} train, {len(val_indices)} val, {len(test_indices)} test indices using DBSCAN spatial clustering with {min_dist} m minimum distance between clusters.'
+            )
             if self.hparams.save_split:
                 split_indices = {
                     'train_indices': self.dataset.df.id[train_indices],
                     'val_indices': self.dataset.df.id[val_indices],
                     'test_indices': self.dataset.df.id[test_indices],
-                    'clusters': clusters
-                    }
-        
+                    'clusters': clusters,
+                }
+
         elif self.hparams.split_mode == "from_file":
-            assert self.hparams.filepath_split_indices is not None, IllegalArgumentCombination(f"filepath_split_indices must be provided when split_mode is 'from_file'")
+            assert self.hparams.filepath_split_indices is not None, IllegalArgumentCombination(
+                f"filepath_split_indices must be provided when split_mode is 'from_file'"
+            )
             self.hparams.save_split = False  ## don't save split when loading from file
             split_indices = self.load_split_indices(self.hparams.filepath_split_indices_load)
             train_indices = split_indices['train_indices']
             val_indices = split_indices['val_indices']
             test_indices = split_indices.get('test_indices', None)
-            
-            if type(train_indices) != pd.Series: raise NotImplementedError('Expected a pd series of ids for data splits.')
-            if type(val_indices) != pd.Series: raise NotImplementedError('Expected a pd series of ids for data splits.')
-            if test_indices is not None and type(test_indices) != pd.Series: raise NotImplementedError('Expected a pd series of ids for data splits.')
+
+            if type(train_indices) != pd.Series:
+                raise NotImplementedError('Expected a pd series of ids for data splits.')
+            if type(val_indices) != pd.Series:
+                raise NotImplementedError('Expected a pd series of ids for data splits.')
+            if test_indices is not None and type(test_indices) != pd.Series:
+                raise NotImplementedError('Expected a pd series of ids for data splits.')
             train_indices = np.where(self.dataset.df['id'].isin(train_indices))[0]
             val_indices = np.where(self.dataset.df['id'].isin(val_indices))[0]
             if test_indices is not None:
                 test_indices = np.where(self.dataset.df['id'].isin(test_indices))[0]
-            
+
             print(f'Dataset was split using indices from file: {self.hparams.filepath_split_indices_load}')
         else:
             raise NotImplementedError(f'{self.hparams.train_val_test_split} split mode not implemented.')
@@ -152,12 +175,22 @@ class BaseDataModule(LightningDataModule):
                 self.data_test = None
 
         if self.hparams.save_split:
-            assert self.hparams.filepath_split_indices_save is not None, "filepath_split_indices_save must be provided when saving a new data split."
-            assert os.path.exists(os.path.dirname(self.hparams.filepath_split_indices_save)), f"Directory to save split indices does not exist: {os.path.dirname(self.hparams.filepath_split_indices_save)}"
+            assert (
+                self.hparams.filepath_split_indices_save is not None
+            ), "filepath_split_indices_save must be provided when saving a new data split."
+            assert os.path.exists(
+                os.path.dirname(self.hparams.filepath_split_indices_save)
+            ), f"Directory to save split indices does not exist: {os.path.dirname(self.hparams.filepath_split_indices_save)}"
             assert type(split_indices) == dict, "split_indices must be a dictionary to be saved."
 
             timestamp = du.create_timestamp()
-            torch.save(split_indices, os.path.join(self.hparams.filepath_split_indices_save, f'split_indices_{self.hparams.dataset_name}_{timestamp}.pth'))
+            torch.save(
+                split_indices,
+                os.path.join(
+                    self.hparams.filepath_split_indices_save,
+                    f'split_indices_{self.hparams.dataset_name}_{timestamp}.pth',
+                ),
+            )
             print(f'Saved split indices to split_indices_{timestamp}.pth')
 
     def load_split_indices(self, filepath: str = None) -> dict:
@@ -166,13 +199,15 @@ class BaseDataModule(LightningDataModule):
             raise FileNotFoundError('Split indices file does not exist: {filepath}')
 
         split_indices = torch.load(filepath, weights_only=False)
-        assert 'train_indices' in split_indices and 'val_indices' in split_indices, "Split indices file must contain 'train_indices' and 'val_indices'"
+        assert (
+            'train_indices' in split_indices and 'val_indices' in split_indices
+        ), "Split indices file must contain 'train_indices' and 'val_indices'"
 
         # TODO: is this ever used?
         n_in_splits = len(split_indices['train_indices']) + len(split_indices['val_indices'])
         if 'test_indices' in split_indices:
             n_in_splits += len(split_indices['test_indices'])
-        
+
         return split_indices
 
     def train_dataloader(self) -> DataLoader[Any]:
@@ -186,7 +221,9 @@ class BaseDataModule(LightningDataModule):
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
             shuffle=True,
-            collate_fn=partial(collate_fn, mode='train') if self.use_collate_fn else None,
+            collate_fn=(
+                partial(collate_fn, mode='train', caption_builder=self.caption_builder) if self.use_collate_fn else None
+            ),
         )
 
     def val_dataloader(self) -> DataLoader[Any]:
@@ -201,7 +238,9 @@ class BaseDataModule(LightningDataModule):
             pin_memory=self.hparams.pin_memory,
             persistent_workers=True if self.hparams.num_workers > 0 else False,
             shuffle=False,
-            collate_fn=partial(collate_fn, mode='val') if self.use_collate_fn else None,
+            collate_fn=(
+                partial(collate_fn, mode='val', caption_builder=self.caption_builder) if self.use_collate_fn else None
+            ),
         )
 
     def test_dataloader(self) -> DataLoader[Any]:
@@ -216,8 +255,11 @@ class BaseDataModule(LightningDataModule):
             pin_memory=self.hparams.pin_memory,
             persistent_workers=True if self.hparams.num_workers > 0 else False,
             shuffle=False,
-            collate_fn=partial(collate_fn, mode='test') if self.use_collate_fn else None,
+            collate_fn=(
+                partial(collate_fn, mode='test', caption_builder=self.caption_builder) if self.use_collate_fn else None
+            ),
         )
 
+
 if __name__ == "__main__":
-    _ = BaseDataModule(None, None, None, None, None, None, None)
+    _ = BaseDataModule(None, None, None, None, None, None, None, None, None, None, None)

@@ -15,7 +15,7 @@ class BaseCaptionBuilder(ABC):
         self.templates = json.load(open(templates_path, "r"))
         self.template_tokens = [self._extract_tokens(t) for t in self.templates]
 
-        self.value_key: Dict[str] | None = None
+        self.column_to_metadata_map: Dict[str] | None = None
 
         self.data_dir = data_dir
 
@@ -48,6 +48,7 @@ class BaseCaptionBuilder(ABC):
     def random(self, aux_values: torch.Tensor) -> List[str]:
 
         formatted_rows = []
+        # TODO: remove resampling
         template_idx = random.choices(range(len(self.templates)), k=len(aux_values))
         for idx, row in zip(template_idx, aux_values):
             formatted_rows.append(self._build_from_template(idx, row))
