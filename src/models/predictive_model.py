@@ -13,13 +13,13 @@ class PredictiveModel(BaseModel):
             self,
             eo_encoder: BaseEOEncoder,
             prediction_head: BasePredictionHead,
-            num_classes: int,
             freezing_strategy: list[str],
             optimizer: torch.optim.Optimizer,
             scheduler: torch.optim.lr_scheduler,
-            loss_fn: BaseLossFn
+            loss_fn: BaseLossFn,
+            num_classes: int,
     ) -> None:
-        super().__init__(freezing_strategy, optimizer, scheduler, loss_fn)
+        super().__init__(freezing_strategy, optimizer, scheduler, loss_fn, num_classes)
         for part in freezing_strategy:
             assert part in ['eo_encoder', 'prediction_head'], ValueError(f"Unknown freezing strategy for {part} part")
 
