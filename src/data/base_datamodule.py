@@ -25,6 +25,7 @@ class BaseDataModule(LightningDataModule):
         train_val_test_split: Tuple[float, float, float] = (0.7, 0.15, 0.15),
         num_workers: int = 0,
         pin_memory: bool = False,
+        dataset_name: str = 'base',
         split_mode: str = 'random',
         save_split: bool = False,
         split_dir: str = None,

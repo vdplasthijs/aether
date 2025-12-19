@@ -2,7 +2,7 @@
 # this requires PROJECT_ROOT environment variable to exist
 # falls back to "." if PROJECT_ROOT is not set
 
-root_dir: ${oc.env:PROJECT_ROOT,.}
+root_dir: ${oc.env:PROJECT_ROOT,./}
 
 # path to data directory
 data_dir: ${oc.env:DATA_DIR,oc.env:SHARED_ROOT/data/,${paths.root_dir}/data/}
