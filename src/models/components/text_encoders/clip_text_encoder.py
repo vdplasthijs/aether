@@ -2,7 +2,6 @@ from typing import Dict, override
 
 import torch
 from transformers import CLIPProcessor, CLIPModel
-from geoclip import GeoCLIP
 
 from src.models.components.text_encoders.base_text_encoder import BaseTextEncoder
 
