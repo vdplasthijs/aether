@@ -32,7 +32,8 @@ class ClipLoss(BaseLossFn):
         # Get cosine similarity
         dot_product = (mod_1 @ mod_2.T) / temperature
 
-        targets = np.arrange(mod_1.shape[0])
+        # TODO: for validation/test labels repeat
+        targets = torch.arange(mod_1.shape[0], device=mod_1.device)
 
         # Calculate losses per modality
         loss1 = F.cross_entropy(dot_product, targets)
