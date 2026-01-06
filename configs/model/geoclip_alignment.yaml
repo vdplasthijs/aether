@@ -7,7 +7,7 @@ text_encoder:
   _target_: src.models.components.text_encoders.clip_text_encoder.ClipTextEncoder
   hf_cache_dir: ${paths.huggingface_cache}
 
-freezing_strategy: [eo_encoder]
+trainable_modules: [text_encoder.projector, loss_fn.temperature]
 
 optimizer:
   _target_: torch.optim.Adam

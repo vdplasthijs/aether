@@ -15,17 +15,14 @@ class TextAlignmentModel(BaseModel):
             self,
             eo_encoder: BaseEOEncoder,
             text_encoder: BaseTextEncoder,
-            freezing_strategy: list[str],
             optimizer: torch.optim.Optimizer,
             scheduler: torch.optim.lr_scheduler,
             loss_fn: BaseLossFn,
+            trainable_modules: list[str] | None = None,
             prediction_head: BasePredictionHead | None = None,
             num_classes: int | None = None,
     ) -> None:
-        super().__init__(freezing_strategy, optimizer, scheduler, loss_fn, num_classes)
-        for part in freezing_strategy:
-            if part not in ['eo_encoder', 'prediction_head', 'text_encoder']:
-                raise ValueError(f"Unknown freezing strategy for {part} part")
+        super().__init__(trainable_modules, optimizer, scheduler, loss_fn, num_classes)
 
         # Encoders configuration
         self.eo_encoder = eo_encoder
