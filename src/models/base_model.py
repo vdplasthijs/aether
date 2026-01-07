@@ -102,3 +102,10 @@ class BaseModel(LightningModule, ABC):
                 },
             }
         return {"optimizer": optimizer}
+
+    def on_save_checkpoint(self, checkpoint):
+        """Save only trainable parts of the model"""
+        checkpoint['state_dict'] = {
+            k: v for k, v in self.state_dict().items()
+            if any(k.startswith(part) for part in self.trainable_parts)
+        }
