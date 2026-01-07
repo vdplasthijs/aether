@@ -146,8 +146,8 @@ class BaseDataModule(LightningDataModule):
             self.hparams.save_split = False  ## don't save split when loading from file
 
             # get indices from file
-            self.hparams.saved_split_file_name = os.path.join(self.hparams.split_dir, self.hparams.saved_split_file_name)
-            split_indices = self.load_split_indices(self.hparams.saved_split_file_name)
+            self.saved_split_file_path = os.path.join(self.hparams.split_dir, self.hparams.saved_split_file_name)
+            split_indices = self.load_split_indices(self.saved_split_file_path)
             train_indices = split_indices['train_indices']
             val_indices = split_indices['val_indices']
             test_indices = split_indices.get('test_indices', None)
@@ -164,7 +164,7 @@ class BaseDataModule(LightningDataModule):
             if test_indices is not None:
                 test_indices = np.where(self.dataset.df['id'].isin(test_indices))[0]
 
-            print(f'Dataset was split using indices from file: {self.hparams.saved_split_file_name}')
+            print(f'Dataset was split using indices from file: {self.saved_split_file_path}')
         else:
             raise NotImplementedError(f'{self.hparams.train_val_test_split} split mode not implemented.')
 
