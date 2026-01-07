@@ -31,6 +31,7 @@ class TextAlignmentModel(BaseModel):
         # Extra projector for text encoder if eo and text dim not match
         if self.eo_encoder.output_dim != self.text_encoder.output_dim:
             self.text_encoder.add_projector(projected_dim = self.eo_encoder.output_dim)
+            self.trainable_modules.append('text_encoder.extra_projector')
 
         # Prediction head
         self.prediction_head = prediction_head
