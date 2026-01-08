@@ -63,22 +63,33 @@ class TextAlignmentModel(BaseModel):
     ) -> torch.Tensor:
         # Embed
         eo_feats, text_feats = self.forward(batch, mode)
+        local_batch_size = eo_feats.size(0)
+
+        # batch recomposing in ddp
+        if self.trainer.world_size > 1:
+            feats = torch.stack([eo_feats, text_feats], dim=0)
+            feats = self.all_gather(feats)
+            feats = feats.reshape(2, -1, feats.size(-1))
+            eo_feats, text_feats = feats[0], feats[1]
 
         # Get similarities
-        _ = self._cos_sim_calc(eo_feats, text_feats, mode)
+        with torch.no_grad():
+            _ = self._cos_sim_calc(eo_feats, text_feats, mode)
 
         # Get loss
         loss = self.loss_fn(eo_feats, text_feats)
-        self.log(f"{mode}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log(f"{mode}_loss", loss, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=local_batch_size)
         if self.loss_fn.__getattr__('log_temp') and mode == 'train':
-            self.log(f'temp', self.loss_fn.__getattr__('log_temp').exp(), on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f'temp', self.loss_fn.__getattr__('log_temp').exp(), on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=local_batch_size)
 
         return loss
 
-    def _cos_sim_calc(self, eo_embeds, text_embeds, mode, log=True):
+    def _cos_sim_calc(self, eo_feats, text_feats, mode, log=True):
 
         # Similarity matrx
-        cos_sim_matrix = F.cosine_similarity(eo_embeds[:, None, :], text_embeds[None, :, :], dim=-1)
+        cos_sim_matrix = F.cosine_similarity(eo_feats[:, None, :], text_feats[None, :, :], dim=-1)
+        local_batch_size = eo_feats.size(0)
+
 
         # Average for positive and negative pairs
         # TODO change label option if we change what gets treated to be pos/neg
@@ -93,10 +104,10 @@ class TextAlignmentModel(BaseModel):
         balanced_avr_sim = torch.mean(balanced_sim)
 
         if log:
-            self.log(f'{mode}_avr_sim', avr_sim, on_step=False, on_epoch=True, prog_bar=True)
-            self.log(f'{mode}_avr_sim_balanced', balanced_avr_sim, on_step=False, on_epoch=True, prog_bar=True)
-            self.log(f'{mode}_pos_sim', torch.mean(pos_sim), on_step=False, on_epoch=True, prog_bar=True)
-            self.log(f'{mode}_neg_sim', torch.mean(neg_sim), on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f'{mode}_avr_sim', avr_sim, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=local_batch_size)
+            self.log(f'{mode}_avr_sim_balanced', balanced_avr_sim, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=local_batch_size)
+            self.log(f'{mode}_pos_sim', torch.mean(pos_sim), on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=local_batch_size)
+            self.log(f'{mode}_neg_sim', torch.mean(neg_sim), on_step=False, on_epoch=True, prog_bar=True, sync_dist=True, batch_size=local_batch_size)
         return avr_sim, pos_sim, neg_sim
 
 
