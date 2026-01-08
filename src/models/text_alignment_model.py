@@ -70,8 +70,8 @@ class TextAlignmentModel(BaseModel):
         # Get loss
         loss = self.loss_fn(eo_feats, text_feats)
         self.log(f"{mode}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        if self.loss_fn.__getattr__('log_temp'):
-            self.log(f'{mode}_loss_temp', self.loss_fn.__getattr__('log_temp').exp(), on_step=False, on_epoch=True, prog_bar=True)
+        if self.loss_fn.__getattr__('log_temp') and mode == 'train':
+            self.log(f'temp', self.loss_fn.__getattr__('log_temp').exp(), on_step=False, on_epoch=True, prog_bar=True)
 
         return loss
 
