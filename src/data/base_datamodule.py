@@ -223,6 +223,7 @@ class BaseDataModule(LightningDataModule):
         return DataLoader(
             dataset=self.data_train,
             batch_size=self.batch_size_per_device,
+            persistent_workers=True if self.hparams.num_workers > 0 else False,
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
             shuffle=True,
@@ -258,7 +259,6 @@ class BaseDataModule(LightningDataModule):
             batch_size=self.batch_size_per_device,
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
-            persistent_workers=True if self.hparams.num_workers > 0 else False,
             shuffle=False,
             collate_fn=(
                 partial(collate_fn, mode='test', caption_builder=self.caption_builder) if self.use_collate_fn else None

@@ -14,7 +14,7 @@ class ClipLoss(BaseLossFn):
             temperature: float,
     ) -> None:
         super().__init__()
-        self.temperature = nn.Parameter(torch.tensor(temperature))
+        self.log_temp = nn.Parameter(torch.log(torch.tensor(temperature)))
 
     @override
     def forward(
@@ -28,7 +28,7 @@ class ClipLoss(BaseLossFn):
         text_mod = F.normalize(text_mod, dim=-1)
 
         # Clip temperature to not exceed 100
-        temperature =  torch.clamp(self.temperature.exp(), max=100)
+        temperature =  torch.clamp(self.log_temp.exp(), max=100)
 
         # Get cosine similarity
         dot_product = (eo_mod @ text_mod.T) / temperature
