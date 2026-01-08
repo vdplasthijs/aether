@@ -24,6 +24,6 @@ data:
 logger:
   wandb:
     tags: ${tags}
-    group: "alignment"
+    group: "predictive"
   aim:
-    experiment: "alignment"
+    experiment: "predictive"
