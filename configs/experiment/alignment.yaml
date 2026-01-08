@@ -10,7 +10,7 @@ defaults:
 # all parameters below will be merged with parameters from default configurations set above
 # this allows you to overwrite only specified parameters
 
-tags: ["alignment", "geoclip_coords_to_geoclip_text"]
+tags: ["alignment", "geoclip_coords", "geoclip_text"]
 
 seed: 12345
 
