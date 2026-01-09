@@ -33,10 +33,6 @@ jobs:
           uv sync
           uv pip install -e .
 
-      - name: List dependencies
-        run: |
-          uv run python -m pip list
-
       - name: List uv dependencies
         run: |
           source .venv/bin/activate
