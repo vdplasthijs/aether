@@ -11,7 +11,8 @@ class BCELoss(BaseLossFn):
             self
     ) -> None:
         super().__init__()
-        self.criterion = nn.BCEWithLogitsLoss()
+        # self.criterion = nn.BCEWithLogitsLoss()
+        self.criterion = nn.BCELoss(reduction='mean')
 
     @override
     def forward(
