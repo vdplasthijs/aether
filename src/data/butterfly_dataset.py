@@ -33,7 +33,7 @@ class ButterflyDataset(BaseDataset):
         if 'coords' in self.modalities:
             columns.extend(['lat', 'lon'])
         if 's2' in self.modalities:
-            if path_s2_im is None: raise  IllegalArgumentCombination(f'Provide path_s2_im for if using s2 modality')
+            if path_s2_im is None: raise IllegalArgumentCombination(f'Provide path_s2_im for if using s2 modality')
             self.path_s2_im = path_s2_im
             self.path_s2_im = os.path.join(
                 self.path_s2_im, 'sentinel2_satellite-images/y-2018-2019_m-06-09'
