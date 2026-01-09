@@ -2,13 +2,13 @@
 
 # AETHER-xAI
 
-[![python](https://img.shields.io/badge/python-3.12%2B-blue)](https://github.com/pre-commit/pre-commit)
+![python](https://img.shields.io/badge/python-3.12%2B-blue)
 [![pytorch](https://img.shields.io/badge/PyTorch_2.0+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
 [![lightning](https://img.shields.io/badge/PyTorch--Lightning-792EE5?style=flat&logo=lightning&logoColor=white)](https://pytorchlightning.ai/)
 [![hydra](https://img.shields.io/badge/Config-Hydra_1.3-89b8cd)](https://hydra.cc/)
-[![license](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/ashleve/lightning-hydra-template#license)
-[![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/ashleve/lightning-hydra-template/pulls)
-![Issues](https://img.shields.io/github/issues/vdplasthijs/aether)
+[![license](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/WUR-AI/aether/blob/main/LICENSE)
+[![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/WUR-AI/aether/pulls)
+[![Issues](https://img.shields.io/github/issues/vdplasthijs/aether)](https://github.com/WUR-AI/aether/issues)
 ![GitHub Tag](https://img.shields.io/github/v/tag/vdplasthijs/aether)
 </div>
 
