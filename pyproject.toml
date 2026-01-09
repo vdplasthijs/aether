@@ -23,6 +23,8 @@ dependencies = [
     "utm>=0.8.1",
     "geopy>=2.4.1",
     "tqdm>=4.67.1",
+    "sh>=2.2.2",
+    "pytest-cov>=7.0.0",
 ]
 
 [project.optional-dependencies]
