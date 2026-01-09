@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.12"]
 
     timeout-minutes: 20
 
@@ -44,7 +44,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["macos-latest"]
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.12"]
 
     timeout-minutes: 20
 
@@ -74,7 +74,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["windows-latest"]
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.12"]
 
     timeout-minutes: 20
 
