@@ -45,10 +45,9 @@ class BaseCaptionBuilder(ABC):
     def _build_from_template(self, template_idx: int, row: torch.Tensor) -> str:
         pass
 
-    def random(self, aux_values: torch.Tensor) -> List[str]:
-
+    def random(self, aux_values: torch.Tensor, n_random=1) -> List[str]:
+        n_random = min(n_random, len(aux_values))
         formatted_rows = []
-        # TODO: remove resampling
         template_idx = random.choices(range(len(self.templates)), k=len(aux_values))
         for idx, row in zip(template_idx, aux_values):
             formatted_rows.append(self._build_from_template(idx, row))
