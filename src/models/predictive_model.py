@@ -1,11 +1,13 @@
 from typing import override, Dict
 
 import torch
+import torch.nn.functional as F
 
 from src.models.base_model import BaseModel
 from src.models.components.eo_encoders.base_eo_encoder import BaseEOEncoder
 from src.models.components.loss_fns.base_loss_fn import BaseLossFn
 from src.models.components.pred_heads.linear_pred_head import BasePredictionHead
+from src.models.components.loss_fns.top_k_accuracy import TopKAccuracy
 
 
 class PredictiveModel(BaseModel):
@@ -49,6 +51,11 @@ class PredictiveModel(BaseModel):
         loss = self.loss_fn(feats, batch.get('target'))
 
         self.log(f"{mode}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        mse_loss = F.mse_loss(feats, batch.get('target'))
+        self.log(f'{mode}_mse_loss', mse_loss, on_step=False, on_epoch=True)
+        top_k_accs = TopKAccuracy(k_list=[1, 5, 10])(feats, batch.get('target'))
+        for k, acc in top_k_accs.items():
+            self.log(f'{mode}_top_{k}_acc', acc, on_step=False, on_epoch=True)
         return loss
 
 if __name__ == "__main__":

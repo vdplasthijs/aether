@@ -17,7 +17,7 @@ class BaseModel(LightningModule, ABC):
             num_classes: int | None = None
     ) -> None:
         super().__init__()
-        self.save_hyperparameters(ignore=['loss_fn', 'eo_encoder', 'prediction_head', 'text_encoder'])
+        self.save_hyperparameters(ignore=['loss_fn'])
 
         self.trainable_modules = tuple(trainable_modules) or tuple()
         self.num_classes: int = num_classes
