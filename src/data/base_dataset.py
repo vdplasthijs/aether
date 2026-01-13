@@ -15,14 +15,34 @@ class BaseDataset(Dataset, ABC):
         use_target_data: bool = True,
         use_aux_data: bool = False,
         dataset_name: str = "BaseDataset",
-        random_state: int = 42,
+        seed: int = 12345,
         mode: str = "train",
     ) -> None:
+        """Interface for any use case dataset.
+
+        It is built on a model-ready csv file containing as columns:
+        - lon, lat coordinates
+        - target column(s)
+        - auxiliary data columns
+        - id column, essential for data splits.
+
+        Dataset should return target and auxiliary data columns if requested, (`use_target_data`, `use_aux_data` parameters).
+        The requested training modality(-ies) are specified through `modalities` parameter.
+
+        :param path_csv: path to model ready csv file
+        :param modalities: a list of modalities needed as EO data (for EO encoder)
+        :param use_target_data: if target values should be returned
+        :param use_aux_data: if auxiliary values should be returned
+        :param dataset_name: dataset name
+        :param seed: random seed
+        :param mode: train/val/test mode of the dataset
+        """
 
         # read and shuffle df
         assert os.path.exists(path_csv), f"{path_csv} does not exist."
         self.df: pd.DataFrame = pd.read_csv(path_csv)
-        self.df = shuffle(self.df, random_state=random_state)
+        self.df = shuffle(self.df, random_state=seed)
+        self.seed = seed
 
         # Set attributes
         self.dataset_name: str = dataset_name + "_" + "_".join(modalities)
@@ -40,8 +60,10 @@ class BaseDataset(Dataset, ABC):
 
     @final
     def __len__(self) -> int:
+        """Returns the length of the dataset."""
         return len(self.records)
 
     @abstractmethod
     def __getitem__(self, idx: int) -> Dict[str, Any]:
+        """Returns a single item from the dataset."""
         pass

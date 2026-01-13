@@ -12,15 +12,27 @@ from src.utils.errors import IllegalArgumentCombination
 class ButterflyDataset(BaseDataset):
     def __init__(
         self,
-        path_csv: str = None,
+        path_csv: str | None = None,
         modalities: list[str] = ["coords"],
         use_target_data: bool = True,
         use_aux_data: bool = False,
-        random_state: int = 42,
-        path_s2_im: str = None,
+        seed: int = 12345,
+        path_s2_im: str | None = None,
         n_bands: int | None = None,
         zscore_im: bool | None = None,
     ) -> None:
+        """A dataset implementation for the Butterfly diversity use case.
+
+        :param path_csv: path to model ready csv file
+        :param modalities: a list of modalities needed as EO data (for EO encoder)
+        :param use_target_data: if target values should be returned
+        :param use_aux_data: if auxiliary values should be returned
+        :param seed: random seed
+        :param path_s2_im: path to S2 image directory
+        :param n_bands: number of bands of s2 images
+        :param zscore_im: if images should be zscored
+        """
+
         if path_csv is None:
             path_csv = os.path.join(
                 os.environ["PROJECT_ROOT"],
@@ -32,7 +44,7 @@ class ButterflyDataset(BaseDataset):
             use_target_data,
             use_aux_data,
             "Butterflies",
-            random_state,
+            seed,
         )
 
         # Placeholder for filtered columns
