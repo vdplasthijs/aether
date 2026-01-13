@@ -44,8 +44,12 @@ def print_config_tree(
 
     # add fields from `print_order` to queue
     for field in print_order:
-        queue.append(field) if field in cfg else log.warning(
-            f"Field '{field}' not found in config. Skipping '{field}' config printing..."
+        (
+            queue.append(field)
+            if field in cfg
+            else log.warning(
+                f"Field '{field}' not found in config. Skipping '{field}' config printing..."
+            )
         )
 
     # add all the other fields to queue (not specified in `print_order`)
@@ -85,8 +89,12 @@ def enforce_tags(cfg: DictConfig, save_to_file: bool = False) -> None:
         if "id" in HydraConfig().cfg.hydra.job:
             raise ValueError("Specify tags before launching a multirun!")
 
-        log.warning("No tags provided in config. Prompting user to input tags...")
-        tags = Prompt.ask("Enter a list of comma separated tags", default="dev")
+        log.warning(
+            "No tags provided in config. Prompting user to input tags..."
+        )
+        tags = Prompt.ask(
+            "Enter a list of comma separated tags", default="dev"
+        )
         tags = [t.strip() for t in tags.split(",") if t != ""]
 
         with open_dict(cfg):

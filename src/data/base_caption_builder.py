@@ -1,10 +1,10 @@
-import random
-from abc import abstractmethod, ABC
 import json
+import random
 import re
+from abc import ABC, abstractmethod
+from typing import Dict, List, final
 
 import torch
-from typing import List, final, Dict
 
 from src.data.base_dataset import BaseDataset
 
@@ -12,8 +12,10 @@ from src.data.base_dataset import BaseDataset
 class BaseCaptionBuilder(ABC):
     def __init__(self, templates_path: str, data_dir: str) -> None:
 
-        self.templates = json.load(open(templates_path, "r"))
-        self.template_tokens = [self._extract_tokens(t) for t in self.templates]
+        self.templates = json.load(open(templates_path))
+        self.template_tokens = [
+            self._extract_tokens(t) for t in self.templates
+        ]
 
         self.column_to_metadata_map: Dict[str] | None = None
 
@@ -42,13 +44,17 @@ class BaseCaptionBuilder(ABC):
         return template
 
     @abstractmethod
-    def _build_from_template(self, template_idx: int, row: torch.Tensor) -> str:
+    def _build_from_template(
+        self, template_idx: int, row: torch.Tensor
+    ) -> str:
         pass
 
     def random(self, aux_values: torch.Tensor, n_random=1) -> List[str]:
         n_random = min(n_random, len(aux_values))
         formatted_rows = []
-        template_idx = random.choices(range(len(self.templates)), k=len(aux_values))
+        template_idx = random.choices(
+            range(len(self.templates)), k=len(aux_values)
+        )
         for idx, row in zip(template_idx, aux_values):
             formatted_rows.append(self._build_from_template(idx, row))
 
@@ -60,27 +66,29 @@ class BaseCaptionBuilder(ABC):
         for row in aux_values:
             descriptions = []
             for template_idx in range(0, len(self)):
-                descriptions.append(self._build_from_template(template_idx, row))
+                descriptions.append(
+                    self._build_from_template(template_idx, row)
+                )
             formatted_rows.append(descriptions)
 
         return formatted_rows
-    
+
+
 def get_adjective_for_percentage(value: float) -> str:
-    '''Get adjective for percentage value (for land cover etc.).'''
+    """Get adjective for percentage value (for land cover etc.)."""
     if value < 10:
         return "little"
     elif value < 20:
-        return 'some'
+        return "some"
     elif value < 30:
-        return 'quite some'
+        return "quite some"
     elif value < 40:
-        return 'a lot of'
+        return "a lot of"
     elif value < 50:
-        return 'much'
+        return "much"
     elif value < 60:
-        return 'mostly'
+        return "mostly"
     elif value < 75:
-        return 'predominantly'
+        return "predominantly"
     else:
-        return 'almost entirely'
-    
+        return "almost entirely"

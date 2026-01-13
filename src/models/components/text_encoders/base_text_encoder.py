@@ -4,6 +4,7 @@ from typing import Dict
 import torch
 from torch import nn
 
+
 class BaseTextEncoder(nn.Module, ABC):
     def __init__(self) -> None:
         super().__init__()
@@ -15,9 +16,7 @@ class BaseTextEncoder(nn.Module, ABC):
 
     @abstractmethod
     def forward(
-            self,
-            batch: Dict[str, torch.Tensor],
-            mode: str
+        self, batch: Dict[str, torch.Tensor], mode: str
     ) -> torch.Tensor:
         pass
 

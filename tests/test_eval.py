@@ -10,7 +10,9 @@ from src.train import train
 
 
 @pytest.mark.slow
-def test_train_eval(tmp_path: Path, cfg_train: DictConfig, cfg_eval: DictConfig) -> None:
+def test_train_eval(
+    tmp_path: Path, cfg_train: DictConfig, cfg_eval: DictConfig
+) -> None:
     """Tests training and evaluation by training for 1 epoch with `train.py` then evaluating with
     `eval.py`.
 
@@ -18,7 +20,11 @@ def test_train_eval(tmp_path: Path, cfg_train: DictConfig, cfg_eval: DictConfig)
     :param cfg_train: A DictConfig containing a valid training configuration.
     :param cfg_eval: A DictConfig containing a valid evaluation configuration.
     """
-    assert str(tmp_path) == cfg_train.paths.output_dir == cfg_eval.paths.output_dir
+    assert (
+        str(tmp_path)
+        == cfg_train.paths.output_dir
+        == cfg_eval.paths.output_dir
+    )
 
     with open_dict(cfg_train):
         cfg_train.trainer.max_epochs = 1
@@ -36,4 +42,10 @@ def test_train_eval(tmp_path: Path, cfg_train: DictConfig, cfg_eval: DictConfig)
     test_metric_dict, _ = evaluate(cfg_eval)
 
     assert test_metric_dict["test/acc"] > 0.0
-    assert abs(train_metric_dict["test/acc"].item() - test_metric_dict["test/acc"].item()) < 0.001
+    assert (
+        abs(
+            train_metric_dict["test/acc"].item()
+            - test_metric_dict["test/acc"].item()
+        )
+        < 0.001
+    )
