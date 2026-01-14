@@ -85,7 +85,8 @@ class BaseModel(LightningModule, ABC):
     def training_step(self, batch: Dict[str, torch.Tensor], batch_idx: int) -> torch.Tensor:
         self.log(
             "lr",
-            self.hparams.lr,
+            self.trainer.lr_scheduler_configs[0].scheduler.get_last_lr()[0],
+            prog_bar=False,
             on_step=True,
             on_epoch=True,
             prog_bar=True,
