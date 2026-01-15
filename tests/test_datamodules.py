@@ -27,8 +27,8 @@ def sample_csv(tmp_path) -> str:
 
 
 class DummyCaptionBuilder(BaseCaptionBuilder):
-    def __init__(self, templates_path: str, data_dir: str):
-        super().__init__(templates_path, data_dir)
+    def __init__(self, templates_path: str, data_dir: str, seed: int) -> None:
+        super().__init__(templates_path, data_dir, seed)
 
     def sync_with_dataset(self, dataset) -> None:
         self.dataset = dataset
@@ -71,7 +71,7 @@ def test_random_split_is_deterministic(sample_csv):
         modalities=["coords"],
         use_target_data=True,
         use_aux_data=False,
-        random_state=0,
+        seed=0,
     )
     ds1 = ButterflyDataset(path_csv=sample_csv, **kwargs)
     ds2 = ButterflyDataset(path_csv=sample_csv, **kwargs)
@@ -87,7 +87,7 @@ def test_random_split_is_deterministic(sample_csv):
 def test_datamodule_uses_collate_when_aux_data(sample_csv, tmp_path):
     templates_path = tmp_path / "templates.json"
     templates_path.write_text(json.dumps(["<name_loc> text"]))
-    caption_builder = DummyCaptionBuilder(str(templates_path), data_dir=str(tmp_path))
+    caption_builder = DummyCaptionBuilder(str(templates_path), data_dir=str(tmp_path), seed=0)
 
     dataset = ButterflyDataset(
         path_csv=sample_csv,
