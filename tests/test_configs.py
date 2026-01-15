@@ -15,8 +15,8 @@ def test_train_config(cfg_train: DictConfig) -> None:
 
     HydraConfig().set_config(cfg_train)
 
-    hydra.utils.instantiate(cfg_train.data)
-    hydra.utils.instantiate(cfg_train.model)
+    datamodule = hydra.utils.instantiate(cfg_train.data)
+    hydra.utils.instantiate(cfg_train.model, num_classes=datamodule.num_classes)
     hydra.utils.instantiate(cfg_train.trainer)
 
 

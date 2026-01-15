@@ -16,7 +16,8 @@ def cfg_train_global() -> DictConfig:
     :return: A DictConfig object containing a default Hydra configuration for training.
     """
     with initialize(version_base="1.3", config_path="../configs"):
-        cfg = compose(config_name="train.yaml", return_hydra_config=True, overrides=[])
+        cfg = compose(config_name="train.yaml", return_hydra_config=True, 
+                      overrides=["data=butterfly_coords", "hydra.job.chdir=false"])
 
         # set defaults for all tests
         with open_dict(cfg):
