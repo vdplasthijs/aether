@@ -1,7 +1,7 @@
 from typing import List
 
 import pytest
-
+import os
 from tests.helpers.package_available import _SH_AVAILABLE
 
 if _SH_AVAILABLE:
@@ -13,6 +13,8 @@ def run_sh_command(command: List[str]) -> None:
 
     :param command: A list of shell commands as strings.
     """
+    env = os.environ.copy()
+    env["HYDRA_COMPLETION"] = "0"  # disables shell completio
     msg = None
     try:
         sh.python(command)
