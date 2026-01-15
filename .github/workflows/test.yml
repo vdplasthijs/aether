@@ -100,7 +100,6 @@ jobs:
 
       - name: Run pytest
         run: |
-          source .venv/bin/activate
           uv run pytest -v
 
   # upload code coverage report
