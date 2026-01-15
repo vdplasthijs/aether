@@ -36,7 +36,7 @@ jobs:
       - name: Run pytest
         run: |
           source .venv/bin/activate
-          uv run pytest -v
+          uv run pytest -v --use-mock
 
   run_tests_macos:
     runs-on: ${{ matrix.os }}
@@ -68,7 +68,7 @@ jobs:
       - name: Run pytest
         run: |
           source .venv/bin/activate
-          pytest -v
+          pytest -v --use-mock
 
   run_tests_windows:
     runs-on: ${{ matrix.os }}
@@ -100,7 +100,7 @@ jobs:
 
       - name: Run pytest
         run: |
-          uv run pytest -v
+          uv run pytest -v --use-mock
 
   # upload code coverage report
   code-coverage:
@@ -129,7 +129,7 @@ jobs:
       - name: Run pytest
         run: |
           source .venv/bin/activate
-          uv run pytest --cov src # NEEDS TO BE UPDATED WHEN CHANGING THE NAME OF "src" FOLDER
+          uv run pytest --use-mock --cov src # NEEDS TO BE UPDATED WHEN CHANGING THE NAME OF "src" FOLDER
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
